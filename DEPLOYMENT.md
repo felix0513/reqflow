@@ -1,122 +1,123 @@
-# ReqFlow 服务器部署指导文档
+# ReqFlow Server Deployment Guide
 
-本文档介绍如何将 ReqFlow 部署到自有服务器（Windows / Linux / macOS 均可），并启用用户注册/登录功能。
+This guide explains how to deploy ReqFlow to your own server (Windows / Linux / macOS) and enable user registration/login.
 
 ---
 
-## 一、部署架构
+## 1. Deployment Architecture
 
 ```
 ┌─────────────┐     HTTP      ┌──────────────────────┐
-│  浏览器用户  │ ───────────▶  │  ReqFlow 服务器       │
-│  （多人）    │               │  server/index.mjs    │
-└─────────────┘               │  ├─ 托管 dist/ 静态页 │
-                              │  ├─ /api/auth/* 注册  │
-                              │  │   登录（scrypt 哈希）│
-                              │  └─ /api/users 账号列表│
-                              │  数据：server/data/    │
+│  Browser     │ ───────────▶  │  ReqFlow Server      │
+│  users       │               │  server/index.mjs    │
+│  (multiple)  │               │  ├─ Serves dist/     │
+└─────────────┘               │  ├─ /api/auth/*      │
+                              │  │  register/login    │
+                              │  │  (scrypt hashing)  │
+                              │  └─ /api/users        │
+                              │  Data: server/data/   │
                               └──────────────────────┘
 ```
 
-- **服务器零依赖**：`server/index.mjs` 仅使用 Node.js 内置模块（http/fs/crypto），无需 `npm install` 任何包。
-- **用户注册/登录**：账号存于 `server/data/users.json`，密码使用 `scrypt` 加盐哈希，明文不落盘。
-- **业务数据**：需求/文档/附件等业务数据仍保存在各用户浏览器的 localStorage + IndexedDB 中（每台浏览器独立工作区）。如后续需要多人共享同一份数据，可在本服务器基础上扩展同步 API。
+- **Zero-dependency server**: `server/index.mjs` uses only Node.js built-in modules (http/fs/crypto); no `npm install` of any package is required.
+- **User registration/login**: accounts are stored in `server/data/users.json`; passwords are scrypt-hashed with salt and never stored in plain text.
+- **Business data**: requirements/documents/attachments remain in each user's browser (localStorage + IndexedDB) as per-browser workspaces. To share the same dataset across multiple users later, extend this server with synchronization APIs.
 
-> 前端会自动探测运行模式：访问 `/api/health` 成功 → 服务器模式（注册/登录走服务端）；失败 → 本地模式（账号名单存本机，可直接在需求中作为创建者/跟进者选择）。
-
----
-
-## 二、环境要求
-
-| 项目 | 要求 |
-|------|------|
-| Node.js | ≥ 18（推荐 20/22 LTS） |
-| 内存 | ≥ 512 MB |
-| 磁盘 | ≥ 200 MB |
-| 端口 | 默认 4173（可用 `PORT` 环境变量修改） |
-
-验证 Node：`node -v`
+> The frontend auto-detects its mode: a successful request to `/api/health` → server mode (registration/login handled server-side); otherwise → local mode (the account list is stored locally and can be selected as creator/owner).
 
 ---
 
-## 三、快速部署（3 条命令）
+## 2. Requirements
 
-在项目根目录执行：
+| Item | Requirement |
+|------|-------------|
+| Node.js | ≥ 18 (20/22 LTS recommended) |
+| Memory | ≥ 512 MB |
+| Disk | ≥ 200 MB |
+| Port | 4173 by default (override via the `PORT` env var) |
+
+Verify Node: `node -v`
+
+---
+
+## 3. Quick Deploy (3 commands)
+
+Run in the project root:
 
 ```bash
-# 1. 安装前端依赖（首次）
+# 1. Install frontend dependencies (first time)
 npm install
 
-# 2. 构建前端产物到 dist/
+# 2. Build the frontend into dist/
 npm run build
 
-# 3. 启动服务器（默认 0.0.0.0:4173）
+# 3. Start the server (default 0.0.0.0:4173)
 npm run serve
 ```
 
-看到以下输出即部署成功：
+You are deployed once you see:
 
 ```
 ──────────────────────────────────────────────
-  ReqFlow 服务器已启动
-  ➜ 本机访问   http://localhost:4173
-  ➜ 网络访问   http://<服务器IP>:4173
-  ➜ 静态目录   .../dist
-  ➜ 用户数据   .../server/data/users.json
+  ReqFlow server started
+  ➜ Local      http://localhost:4173
+  ➜ Network    http://<server-IP>:4173
+  ➜ Static     .../dist
+  ➜ Users      .../server/data/users.json
 ──────────────────────────────────────────────
 ```
 
-局域网/互联网用户通过 `http://<服务器IP>:4173` 访问，右上角「未登录」按钮即可注册账号。
+LAN/Internet users access via `http://<server-IP>:4173` and register an account from the "Not logged in" button in the top-right.
 
-### 环境变量
+### Environment Variables
 
-| 变量 | 默认值 | 说明 |
-|------|--------|------|
-| `PORT` | `4173` | 监听端口 |
-| `HOST` | `0.0.0.0` | 监听地址（`127.0.0.1` = 仅本机） |
-| `REQFLOW_DIST` | `../dist` | 前端产物目录（可指向自定义路径） |
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `PORT` | `4173` | Listening port |
+| `HOST` | `0.0.0.0` | Listening address (`127.0.0.1` = local only) |
+| `REQFLOW_DIST` | `../dist` | Frontend build directory (can point to a custom path) |
 
-示例：`PORT=80 node server/index.mjs`
+Example: `PORT=80 node server/index.mjs`
 
 ---
 
-## 四、用户注册与账号体系
+## 4. User Registration & Accounts
 
-1. 打开 `http://<服务器IP>:4173`，点击右上角 **未登录** 按钮。
-2. 切换到「注册新账号」标签，填写用户名（2-32 位）、密码（≥4 位）、可选显示名。
-3. 注册成功自动登录，顶栏显示当前账号。
-4. 新建需求时：
-   - **创建者**默认填充当前登录账号；
-   - **跟进者**可从系统内全部注册账号下拉选择，也可为空。
-5. 导出的需求文档（Excel/CSV/Markdown/HTML/PDF）自动包含创建者/跟进者字段。
+1. Open `http://<server-IP>:4173` and click the **Not logged in** button in the top-right.
+2. Switch to the "Register" tab and fill in a username (2-32 chars), a password (≥ 4 chars), and an optional display name.
+3. On success you are logged in automatically; the top bar shows the current account.
+4. When creating a requirement:
+   - **Creator** defaults to the current account;
+   - **Owner** can be picked from all registered accounts via dropdown, or left empty.
+5. Exported requirement documents (Excel/CSV/Markdown/HTML/PDF) automatically include the creator/owner fields.
 
-### API 一览（可供运维/集成调用）
+### API Reference (for ops/integration)
 
 ```bash
-# 健康检查
+# Health check
 curl http://localhost:4173/api/health
 
-# 注册
+# Register
 curl -X POST http://localhost:4173/api/auth/register \
   -H "Content-Type: application/json" \
-  -d '{"username":"zhangsan","password":"123456","displayName":"张三"}'
+  -d '{"username":"zhangsan","password":"123456","displayName":"Zhang San"}'
 
-# 登录（返回 7 天有效 token）
+# Login (returns a 7-day token)
 curl -X POST http://localhost:4173/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"username":"zhangsan","password":"123456"}'
 
-# 账号列表（需 token）
+# List accounts (requires token)
 curl http://localhost:4173/api/users -H "Authorization: Bearer <token>"
 ```
 
 ---
 
-## 五、生产环境常驻运行
+## 5. Production (Keep It Running)
 
-### Linux（systemd）
+### Linux (systemd)
 
-创建 `/etc/systemd/system/reqflow.service`：
+Create `/etc/systemd/system/reqflow.service`:
 
 ```ini
 [Unit]
@@ -139,10 +140,10 @@ WantedBy=multi-user.target
 ```bash
 sudo systemctl daemon-reload
 sudo systemctl enable --now reqflow
-sudo systemctl status reqflow     # 查看运行状态
+sudo systemctl status reqflow     # check status
 ```
 
-### Linux（pm2）
+### Linux (pm2)
 
 ```bash
 npm install -g pm2
@@ -150,7 +151,7 @@ pm2 start server/index.mjs --name reqflow
 pm2 save && pm2 startup
 ```
 
-### Docker（可选）
+### Docker (optional)
 
 ```dockerfile
 FROM node:22-alpine
@@ -166,7 +167,7 @@ docker build -t reqflow .
 docker run -d -p 4173:4173 -v reqflow-data:/app/server/data --name reqflow reqflow
 ```
 
-### Nginx 反向代理（可选，用于 80/443 + HTTPS）
+### Nginx reverse proxy (optional, for 80/443 + HTTPS)
 
 ```nginx
 server {
@@ -181,18 +182,18 @@ server {
 }
 ```
 
-HTTPS 建议配合 `certbot` 签发证书。
+For HTTPS, pair it with `certbot` to issue a certificate.
 
 ---
 
-## 六、数据备份与迁移
+## 6. Backup & Migration
 
-| 数据 | 位置 | 说明 |
-|------|------|------|
-| 用户账号 | `server/data/users.json` | 定期备份；迁移时整目录拷贝即可 |
-| 前端产物 | `dist/` | 重新 `npm run build` 即可再生 |
+| Data | Location | Notes |
+|------|----------|-------|
+| User accounts | `server/data/users.json` | Back up regularly; copy the whole directory when migrating |
+| Frontend build | `dist/` | Regenerated by `npm run build` |
 
-备份示例：
+Backup example:
 
 ```bash
 tar czf reqflow-backup-$(date +%F).tar.gz server/data/
@@ -200,36 +201,36 @@ tar czf reqflow-backup-$(date +%F).tar.gz server/data/
 
 ---
 
-## 七、升级流程
+## 7. Upgrade
 
 ```bash
 cd /opt/reqflow
-git pull                 # 或覆盖新代码
-npm install              # 依赖有更新时
-npm run build            # 重新构建前端
-sudo systemctl restart reqflow   # 或 pm2 restart reqflow
+git pull                        # or overwrite with new code
+npm install                     # when dependencies change
+npm run build                   # rebuild the frontend
+sudo systemctl restart reqflow  # or pm2 restart reqflow
 ```
 
-账号数据在升级过程中保留（`server/data/` 与代码分离）。
+Account data is preserved during upgrades (`server/data/` is kept separate from code).
 
 ---
 
-## 八、常见问题
+## 8. FAQ
 
-**Q1：访问显示「未找到资源，请先执行 npm run build」？**
-说明 `dist/` 不存在，先在项目根目录执行 `npm run build`。
+**Q1: I see "Resource not found, run npm run build first"?**
+`dist/` does not exist; run `npm run build` in the project root first.
 
-**Q2：注册时报「该用户名已被注册」？**
-用户名全局唯一，请换一个；或管理员手动编辑 `server/data/users.json`（编辑前停服）。
+**Q2: Registration says "username already taken"?**
+Usernames are globally unique; pick another, or an admin can manually edit `server/data/users.json` (stop the server before editing).
 
-**Q3：忘记密码？**
-管理员可在 `server/data/users.json` 中删除对应账号条目，让用户重新注册。
+**Q3: Forgot the password?**
+An admin can delete the account entry in `server/data/users.json` and let the user re-register.
 
-**Q4：忘记密码 / token 过期？**
-登录 token 有效期 7 天，过期后重新登录即可。
+**Q4: Token expired?**
+Login tokens are valid for 7 days; log in again after expiry.
 
-**Q5：如何修改端口？**
-启动时加环境变量：`PORT=8080 node server/index.mjs`。
+**Q5: How do I change the port?**
+Set an environment variable on startup: `PORT=8080 node server/index.mjs`.
 
-**Q6：需求/文档数据存在哪里？多人是否共享？**
-业务数据保存在各用户浏览器（localStorage + IndexedDB），同一浏览器多账号共用一个工作区；不同浏览器/电脑之间不自动同步。
+**Q6: Where are requirements/documents stored? Are they shared across users?**
+Business data lives in each user's browser (localStorage + IndexedDB); multiple accounts on the same browser share one workspace; different browsers/computers do not auto-sync.
