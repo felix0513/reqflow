@@ -1,135 +1,135 @@
 # ReqFlow
 
-需求流程管理工具 —— 面向研发团队的需求全生命周期管理桌面应用与可部署 Web 服务。
+A requirements workflow management tool — a desktop app and deployable web service for R&D teams to manage the full requirements lifecycle.
 
-轻量、可追溯、可私有化。数据默认保存在本地（localStorage + IndexedDB），支持零依赖 Node 服务器部署实现团队多人访问与账号注册。
+Lightweight, traceable, and private. Data is stored locally by default (localStorage + IndexedDB), with a zero-dependency Node server for team access and user registration.
 
-## ✨ 功能特性
+## ✨ Features
 
-- **项目管理**：多项目工作空间，需求按项目隔离，一键切换过滤。
-- **语义化版本控制**：每次变更自动生成版本快照（vX.Y.Z），标题变更升 Major、描述/分类升 Minor、状态/优先级等升 Patch，历史时间线可回溯。
-- **全局唯一 ID 号**：`REQ-{分类码}-{序号}`（如 `REQ-FEA-0001`），跨项目永不冲突，支持点击复制。
-- **需求管理**：创建/编辑/删除、优先级、状态流转（6 态）、标签、截止日期、逾期筛选、自动保存。
-- **创建者/跟进者**：需求关联系统账号，默认创建者为当前账户。
-- **附件与文档库**：拖拽上传本地文件/文件夹、Markdown 文档、IndexedDB 大文件存储、`reqflow://` 链接协议全局跳转。
-- **多格式预览**：150+ 文本格式、音视频内嵌播放、pptx 幻灯片、doc/ppt 老格式、.eml 邮件、Excel/PDF 等。
-- **多格式导出**：Excel / CSV / HTML / Markdown / PDF，支持单条与批量导出。
-- **项目状态仪表盘**：跨项目统计、完成率、优先级分布，支持导出报告。
-- **服务器部署**：零依赖 Node 服务器 + 用户注册/登录（scrypt 哈希、Bearer 会话）。
-- **明暗主题**：支持亮色/暗色/跟随系统。
+- **Project management**: multiple project workspaces, requirements isolated per project, one-click switching.
+- **Semantic version control**: every change auto-records a version snapshot (`vX.Y.Z`); title change bumps Major, description/category bumps Minor, status/priority etc. bump Patch; a history timeline is reviewable.
+- **Globally unique IDs**: `REQ-{category-code}-{sequence}` (e.g. `REQ-FEA-0001`), never conflicting across projects, with click-to-copy.
+- **Requirement management**: create/edit/delete, priority, 6-state status flow, tags, due dates, overdue filtering, auto-save.
+- **Creator / owner**: link requirements to system accounts; the creator defaults to the current account.
+- **Attachments & document library**: drag-and-drop upload of files/folders, Markdown documents, IndexedDB large-file storage, `reqflow://` link protocol with global navigation.
+- **Multi-format preview**: 150+ text formats, inline audio/video, pptx slides, legacy doc/ppt, .eml email, Excel/PDF, and more.
+- **Multi-format export**: Excel / CSV / HTML / Markdown / PDF, single or batch export.
+- **Project status dashboard**: cross-project statistics, completion rate, priority distribution, with report export.
+- **Server deployment**: zero-dependency Node server + user registration/login (scrypt hashing, Bearer sessions).
+- **Light/dark theme**: light, dark, or follow-system.
 
-## 🛠 技术栈
+## 🛠 Tech Stack
 
-- **前端**：React 18 + TypeScript + MUI 5 + Vite + Tailwind CSS
-- **状态管理**：useReducer + Context API
-- **持久化**：localStorage（元数据）+ IndexedDB（二进制文件）
-- **桌面端**：Electron
-- **服务端**：零依赖 Node（http/fs/crypto 内置模块）
-- **测试**：Vitest + @testing-library/react + Playwright
-- **文档解析**：xlsx、mammoth（docx）、自研最小 ZIP 读取器（pptx）
+- **Frontend**: React 18 + TypeScript + MUI 5 + Vite + Tailwind CSS
+- **State management**: useReducer + Context API
+- **Persistence**: localStorage (metadata) + IndexedDB (binary files)
+- **Desktop**: Electron
+- **Server**: zero-dependency Node (built-in `http`/`fs`/`crypto`)
+- **Testing**: Vitest + @testing-library/react + Playwright
+- **Document parsing**: xlsx, mammoth (docx), a minimal ZIP reader (pptx)
 
-## 🚀 快速开始
+## 🚀 Getting Started
 
-### 环境要求
+### Prerequisites
 
 - Node.js ≥ 18
 
-### 安装
+### Install
 
 ```bash
 npm install
 ```
 
-### 开发模式
+### Development
 
 ```bash
 npm run dev
-# 打开 http://localhost:5173/
+# open http://localhost:5173/
 ```
 
-### 生产构建
+### Production build
 
 ```bash
 npm run build
 ```
 
-### 本地部署（服务器模式）
+### Local deployment (server mode)
 
 ```bash
 npm run build
 npm run serve
-# 打开 http://localhost:4173/（默认端口，可通过 PORT 环境变量修改）
+# open http://localhost:4173/ (default port; override via the PORT env var)
 ```
 
-### 桌面应用（Electron）
+### Desktop app (Electron)
 
 ```bash
 npm run electron
 ```
 
-### 打包安装包
+### Package installers
 
 ```bash
-npm run dist:win   # Windows（NSIS + 便携版）
-npm run dist       # 当前平台
+npm run dist:win   # Windows (NSIS + portable)
+npm run dist       # current platform
 ```
 
-### 运行测试
+### Run tests
 
 ```bash
-npm test           # 运行全部单元测试
-npm run test:watch # 监听模式
+npm test           # run all unit tests
+npm run test:watch # watch mode
 ```
 
-## 📁 项目结构
+## 📁 Project Structure
 
 ```
 ReqFlow_Project/
-├── electron/            # Electron 主进程与预加载脚本
+├── electron/            # Electron main & preload scripts
 │   ├── main.cjs
 │   └── preload.cjs
-├── server/              # 零依赖 Node 服务器（部署模式）
+├── server/              # zero-dependency Node server (deployment mode)
 │   └── index.mjs
 ├── src/
-│   ├── components/      # React 组件（dashboard/list/board/docs/drawer 等）
-│   ├── context/         # 全局状态（Requirements/Docs/Account）
-│   ├── services/        # 业务逻辑（idgen/versioning/export/filedb/dragdrop/ooxml 等）
-│   ├── hooks/           # 自定义 Hooks
-│   ├── data/            # 种子数据
-│   ├── constants/       # 常量定义
-│   ├── __tests__/       # 单元测试
-│   ├── types.ts         # 全局类型定义
-│   └── App.tsx          # 应用入口
-├── docs/                # 架构文档（类图/时序图/路线图）
-├── prd/                 # 产品需求文档（中英双语）
-├── DEPLOYMENT.md        # 部署指导文档
+│   ├── components/      # React components (dashboard/list/board/docs/drawer, etc.)
+│   ├── context/         # global state (Requirements/Docs/Account)
+│   ├── services/        # business logic (idgen/versioning/export/filedb/dragdrop/ooxml, etc.)
+│   ├── hooks/           # custom hooks
+│   ├── data/            # seed data
+│   ├── constants/       # constants
+│   ├── __tests__/       # unit tests
+│   ├── types.ts         # global type definitions
+│   └── App.tsx          # app entry
+├── docs/                # architecture docs (class/sequence diagrams, roadmap)
+├── prd/                 # product requirements documents (Chinese & English)
+├── DEPLOYMENT.md        # deployment guide
 ├── package.json
 └── vite.config.ts
 ```
 
-## 📖 文档
+## 📖 Documentation
 
-- 产品需求文档：[中文版](prd/ReqFlow_PRD_zh_v1.0.md) · [English](prd/ReqFlow_PRD_en_v1.0.md)
-- 部署指导：[DEPLOYMENT.md](DEPLOYMENT.md)
+- Product Requirements Document: [中文版](prd/ReqFlow_PRD_zh_v1.0.md) · [English](prd/ReqFlow_PRD_en_v1.0.md)
+- Deployment guide: [DEPLOYMENT.md](DEPLOYMENT.md)
 
-## 🔧 核心命令速查
+## 🔧 Command Reference
 
-| 命令 | 说明 |
+| Command | Description |
 | --- | --- |
-| `npm run dev` | 启动开发服务器 |
-| `npm run build` | 类型检查 + 生产构建 |
-| `npm run serve` | 启动部署服务器（托管 dist/） |
-| `npm test` | 运行单元测试 |
-| `npm run electron` | 启动 Electron 桌面应用 |
-| `npm run dist:win` | 打包 Windows 安装包 |
+| `npm run dev` | Start the dev server |
+| `npm run build` | Type-check + production build |
+| `npm run serve` | Start the deployment server (serves `dist/`) |
+| `npm test` | Run unit tests |
+| `npm run electron` | Launch the Electron desktop app |
+| `npm run dist:win` | Package a Windows installer |
 
-## 🧩 环境变量（服务器部署）
+## 🧩 Environment Variables (server deployment)
 
-| 变量 | 默认值 | 说明 |
+| Variable | Default | Description |
 | --- | --- | --- |
-| `PORT` | `4173` | 服务监听端口 |
-| `HOST` | `0.0.0.0` | 监听地址 |
-| `REQFLOW_DIST` | `dist/` | 静态资源目录 |
+| `PORT` | `4173` | Server listening port |
+| `HOST` | `0.0.0.0` | Listening address |
+| `REQFLOW_DIST` | `dist/` | Static assets directory |
 
 ## 📝 License
 
