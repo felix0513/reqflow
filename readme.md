@@ -101,7 +101,6 @@ ReqFlow_Project/
 │   ├── types.ts         # global type definitions
 │   └── App.tsx          # app entry
 ├── docs/                # architecture docs (class/sequence diagrams, roadmap)
-├── prd/                 # product requirements documents (Chinese & English)
 ├── DEPLOYMENT.md        # deployment guide
 ├── package.json
 └── vite.config.ts
@@ -109,7 +108,6 @@ ReqFlow_Project/
 
 ## 📖 Documentation
 
-- Product Requirements Document: [中文版](prd/ReqFlow_PRD_zh_v1.0.md) · [English](prd/ReqFlow_PRD_en_v1.0.md)
 - Deployment guide: [DEPLOYMENT.md](DEPLOYMENT.md)
 
 ## 🔧 Command Reference
