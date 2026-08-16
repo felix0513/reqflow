@@ -1,0 +1,81 @@
+classDiagram
+    class Requirement {
+        +string id
+        +string title
+        +string description
+        +string categoryId
+        +Priority priority
+        +Status status
+        +string[] tags
+        +string dueDate
+        +number order
+        +string createdAt
+        +string updatedAt
+    }
+    class Category {
+        +string id
+        +string name
+        +string color
+    }
+    class AppSettings {
+        +ThemeMode themeMode
+    }
+    class FilterState {
+        +string keyword
+        +string[] categoryIds
+        +Priority[] priorities
+        +Status[] statuses
+        +string[] tags
+    }
+    class DrawerState {
+        +boolean open
+        +string editingId
+    }
+    class ToastState {
+        +boolean open
+        +string message
+        +string severity
+    }
+    class AppState {
+        +Requirement[] requirements
+        +Category[] categories
+        +AppSettings settings
+        +FilterState filter
+        +ViewMode view
+        +string[] selectedIds
+        +DrawerState drawer
+        +ToastState toast
+    }
+    class StorageService {
+        +loadRequirements() Requirement[]
+        +saveRequirements(reqs) void
+        +loadCategories() Category[]
+        +saveCategories(cats) void
+        +loadSettings() AppSettings
+        +saveSettings(s) void
+        +exportJSON() string
+        +importJSON(data, mode) void
+        +clearAll() void
+    }
+    class RequirementsContext {
+        +AppState state
+        +dispatch(action) void
+        +useRequirements() context
+    }
+    class FilterUtils {
+        +applyFilter(reqs, filter) Requirement[]
+        +sortRequirements(reqs, key, dir) Requirement[]
+    }
+
+    AppState "1" *-- "0..*" Requirement
+    AppState "1" *-- "0..*" Category
+    AppState "1" *-- "1" AppSettings
+    AppState "1" *-- "1" FilterState
+    AppState "1" *-- "1" DrawerState
+    AppState "1" *-- "1" ToastState
+    RequirementsContext ..> AppState : manages
+    RequirementsContext ..> StorageService : persists
+    StorageService ..> Requirement : serializes
+    StorageService ..> Category : serializes
+    FilterUtils ..> Requirement : computes
+    FilterUtils ..> FilterState : reads

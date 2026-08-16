@@ -1,0 +1,67 @@
+sequenceDiagram
+    autonumber
+    participant Main as main.tsx
+    participant App as App
+    participant Ctx as RequirementsContext
+    participant Storage as StorageService
+    participant LS as localStorage
+
+    Note over Main,LS: === 6.1 应用初始化 ===
+    Main->>App: ReactDOM.render(<App/>)
+    App->>Ctx: RequirementsProvider 挂载
+    Ctx->>Storage: initFromStorage()
+    Storage->>LS: getItem(reqflow:requirements/categories/settings)
+    LS-->>Storage: JSON 字符串
+    Storage-->>Ctx: 解析为 AppState 初值（无则 seed 默认分类）
+    Ctx-->>App: 渲染 Layout + 各视图
+
+    Note over Main,LS: === 6.2 创建需求 ===
+    actor U as 用户
+    participant Nav as TopNav
+    participant Form as RequirementForm
+    U->>Nav: 点击「+新建」
+    Nav->>Ctx: dispatch(DRAWER_OPEN, {id:null})
+    Ctx->>Form: 抽屉打开（空表单）
+    U->>Form: 填写字段，点击「保存」
+    Form->>Form: 校验 title 非空
+    Form->>Ctx: dispatch(REQ_CREATE, requirement)
+    Ctx->>Ctx: reducer 生成 id/createdAt/updatedAt/order，append
+    Ctx->>Storage: useEffect → saveRequirements
+    Storage->>LS: setItem(reqflow:requirements, JSON)
+    Ctx->>Ctx: dispatch(DRAWER_CLOSE) + TOAST_SHOW
+    Ctx-->>U: 列表/看板实时出现新需求 + Toast
+
+    Note over Main,LS: === 6.3 看板拖拽改状态 ===
+    participant Board as BoardView(DndContext)
+    participant Card as RequirementCard
+    U->>Card: 拖动卡片跨列
+    Card->>Board: onDragEnd(source, target)
+    Board->>Ctx: dispatch(REQ_MOVE_STATUS,{id,status:target,order})
+    Ctx->>Ctx: reducer 更新 status/order
+    Ctx->>Storage: useEffect → saveRequirements
+    Storage->>LS: 落盘
+    Ctx-->>U: 卡片落入新列 + Toast 成功
+
+    Note over Main,LS: === 6.4 筛选 + 搜索 ===
+    participant Bar as FilterBar/TopNav
+    participant Hook as useFilteredRequirements
+    participant List as ListView
+    U->>Bar: 选条件 / 输入关键词
+    Bar->>Ctx: dispatch(FILTER_SET, patch)
+    Ctx->>Hook: state.filter 变化触发重算
+    Hook->>Hook: FilterUtils 纯函数：匹配+排序
+    Hook-->>List: 返回 filteredRequirements
+    List-->>U: 表格/看板即时刷新
+
+    Note over Main,LS: === 6.5 数据导出 / 导入 ===
+    participant DM as DataManager
+    participant File as 浏览器下载/文件
+    U->>DM: 点击「导出 JSON」
+    DM->>Storage: exportJSON()
+    Storage->>LS: 读取全部
+    Storage->>File: 生成 Blob 触发下载 reqflow-export.json
+    U->>DM: 选择文件 + 模式(覆盖/合并)
+    DM->>Storage: importJSON(data, mode)
+    Storage->>LS: 写回 reqflow:requirements
+    DM->>Ctx: dispatch(DATA_IMPORT) + TOAST_SHOW
+    Ctx-->>U: 视图刷新 + Toast
